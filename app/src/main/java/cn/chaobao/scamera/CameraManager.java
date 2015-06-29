@@ -150,12 +150,23 @@ public class CameraManager {
         parameters.setRotation(90);
         parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
         mCamera.setParameters(parameters);
-//        //设置闪光灯模式。此处主要是用于在相机摧毁后又重建，保持之前的状态
-//        setFlashMode(mFlashMode);
-//        //设置缩放级别
-//        setZoom(mZoom);
-//        //开启屏幕朝向监听
-//        startOrientationChangeListener();
+
+    }
+
+    public String getFlashMode() {
+        if (mCamera != null) {
+            return mCamera.getParameters().getFlashMode();
+        } else {
+            return "";
+        }
+    }
+
+    public void setFlashMode(String mode) {
+        if (mCamera != null) {
+            Camera.Parameters parameters = mCamera.getParameters();
+            parameters.setFlashMode(mode);
+            mCamera.setParameters(parameters);
+        }
     }
 
     public interface TakePictureListener {
