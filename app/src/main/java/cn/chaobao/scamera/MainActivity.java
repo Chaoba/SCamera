@@ -14,7 +14,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         SurfaceView surfaceView= (SurfaceView) findViewById(R.id.surface);
         final CameraManager mCameraManager=new CameraManager();
-        mCameraManager.setSurface(surfaceView,mLister);
+        mCameraManager.setSurface(this,surfaceView,mLister);
         findViewById(R.id.take_pieture).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

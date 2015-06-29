@@ -1,8 +1,13 @@
 package cn.chaobao.scamera;
 
+import android.content.Context;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
+import android.media.MediaScannerConnection;
+import android.net.Uri;
 import android.os.Environment;
+import android.os.StatFs;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -23,8 +28,10 @@ public class CameraManager {
     private SurfaceHolder mHolder;
     private TakePictureListener mTakePictureListener;
     private static final SimpleDateFormat format = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
+    Context mContext;
 
-    public void setSurface(SurfaceView surface, TakePictureListener listener) {
+    public void setSurface(Context c, SurfaceView surface, TakePictureListener listener) {
+        mContext = c;
         mSurface = surface;
         mHolder = mSurface.getHolder();
         mHolder.addCallback(mSurfaceHolderCallback);
@@ -44,12 +51,20 @@ public class CameraManager {
     };
 
     public void tackPicture() {
+        if (!externalMemoryAvailable()) {
+            //TODO: add note
+            return;
+        }
         if (mCamera != null) {
             mCamera.takePicture(null, null, null, mPictureCallback);
         }
     }
 
     public void saveToSDCard(byte[] data) throws IOException {
+        if (data.length > getAvailableExternalMemorySize()) {
+            //TODO:add note;
+            return;
+        }
         Date date = new Date();
         String filename = format.format(date) + ".jpg";
         File fileFolder = new File(Environment.getExternalStorageDirectory()
@@ -61,9 +76,21 @@ public class CameraManager {
         FileOutputStream outputStream = new FileOutputStream(jpgFile);
         outputStream.write(data);
         outputStream.close();
+        scanFile(jpgFile.getPath());
         if (mTakePictureListener != null) {
             mTakePictureListener.onPictureTake(jpgFile.getPath());
         }
+    }
+
+    private void scanFile(String path) {
+        MediaScannerConnection.scanFile(mContext,
+                new String[]{path}, null,
+                new MediaScannerConnection.OnScanCompletedListener() {
+
+                    public void onScanCompleted(String path, Uri uri) {
+                        Log.i("TAG", "Finished scanning " + path);
+                    }
+                });
     }
 
     Camera.AutoFocusCallback mAutoFocusCB = new Camera.AutoFocusCallback() {
@@ -94,7 +121,7 @@ public class CameraManager {
 
         @Override
         public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-            if(mCamera!=null) {
+            if (mCamera != null) {
                 Camera.Parameters parameters = mCamera.getParameters();
                 parameters.setPreviewSize(width, height);
             }
@@ -108,12 +135,13 @@ public class CameraManager {
             }
         }
     };
-    private void setCameraParameters(){
+
+    private void setCameraParameters() {
         Camera.Parameters parameters = mCamera.getParameters();
         List<Camera.Size> sizeList;
         sizeList = parameters.getSupportedPictureSizes();
-        if (sizeList.size()>0) {
-            Camera.Size cameraSize=sizeList.get(0);
+        if (sizeList.size() > 0) {
+            Camera.Size cameraSize = sizeList.get(0);
             parameters.setPictureSize(cameraSize.width, cameraSize.height);
         }
         parameters.setPictureFormat(ImageFormat.JPEG);
@@ -129,8 +157,24 @@ public class CameraManager {
 //        //开启屏幕朝向监听
 //        startOrientationChangeListener();
     }
+
     public interface TakePictureListener {
         public void onPictureTake(String path);
     }
 
+    public boolean externalMemoryAvailable() {
+        return Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED);
+    }
+
+    public long getAvailableExternalMemorySize() {
+        if (externalMemoryAvailable()) {
+            File path = Environment.getExternalStorageDirectory();
+            StatFs stat = new StatFs(path.getPath());
+            long blockSize = stat.getBlockSize();
+            long availableBlocks = stat.getAvailableBlocks();
+            return availableBlocks * blockSize;
+        } else {
+            return -1;
+        }
+    }
 }
