@@ -1,41 +1,34 @@
 package cn.chaobao.scamera;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.support.v7.app.AppCompatActivity;
 import android.view.SurfaceView;
+import android.view.View;
 
 public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
         SurfaceView surfaceView= (SurfaceView) findViewById(R.id.surface);
-        CameraManager mCameraManager=new CameraManager();
-        mCameraManager.setSurface(surfaceView);
+        final CameraManager mCameraManager=new CameraManager();
+        mCameraManager.setSurface(surfaceView,mLister);
+        findViewById(R.id.take_pieture).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mCameraManager.tackPicture();
+            }
+        });
+
     }
+    CameraManager.TakePictureListener mLister=new CameraManager.TakePictureListener(){
+        @Override
+        public void onPictureTake(String path) {
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
         }
+    };
 
-        return super.onOptionsItemSelected(item);
-    }
+
 }
