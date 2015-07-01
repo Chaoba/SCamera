@@ -1,27 +1,69 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".MainActivity">
+                xmlns:tools="http://schemas.android.com/tools"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                tools:context=".MainActivity">
+
+
+    <SurfaceView
+        android:id="@+id/surface"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <ImageView
+        android:id="@+id/anim_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"/>
+
+    <RadioGroup
+        android:id="@+id/splash_group"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_alignParentTop="true"
+        android:orientation="horizontal"
+        android:padding="10dp">
+
+        <RadioButton
+            android:id="@+id/splash_auto"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="auto"/>
+
+        <RadioButton
+            android:id="@+id/splash_on"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="on"/>
+
+        <RadioButton
+            android:id="@+id/splash_off"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="off"/>
+
+    </RadioGroup>
 
     <RelativeLayout
         android:id="@+id/bottom_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true">
+        android:layout_alignParentBottom="true"
+        android:padding="10dp">
+
+        <ImageView
+            android:id="@+id/thumbnail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:src="@mipmap/ic_launcher"/>
 
         <Button
             android:id="@+id/take_pieture"
-            android:text="take"
-            android:layout_centerInParent="true"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="take"/>
     </RelativeLayout>
-
-    <SurfaceView
-        android:id="@+id/surface"
-        android:layout_above="@id/bottom_bar"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
 </RelativeLayout>

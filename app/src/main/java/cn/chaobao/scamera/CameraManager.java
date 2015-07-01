@@ -1,9 +1,12 @@
 package cn.chaobao.scamera;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
 import android.media.MediaScannerConnection;
+import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.StatFs;
@@ -44,15 +47,20 @@ public class CameraManager {
         public void onPictureTaken(byte[] data, Camera camera) {
             try {
                 saveToSDCard(data);
+
             } catch (IOException e) {
-                e.printStackTrace();
+                if (mTakePictureListener != null) {
+                    mTakePictureListener.onError("save picture failed!");
+                }
             }
         }
     };
 
     public void tackPicture() {
         if (!externalMemoryAvailable()) {
-            //TODO: add note
+            if (mTakePictureListener != null) {
+                mTakePictureListener.onError("no sdcard!");
+            }
             return;
         }
         if (mCamera != null) {
@@ -62,9 +70,14 @@ public class CameraManager {
 
     public void saveToSDCard(byte[] data) throws IOException {
         if (data.length > getAvailableExternalMemorySize()) {
-            //TODO:add note;
+            if (mTakePictureListener != null) {
+                mTakePictureListener.onError("no enough memory");
+            }
             return;
         }
+        Bitmap bm = BitmapFactory.decodeByteArray(data, 0, data.length);
+        //生成缩略图
+        Bitmap thumbnail = ThumbnailUtils.extractThumbnail(bm, 213, 213);
         Date date = new Date();
         String filename = format.format(date) + ".jpg";
         File fileFolder = new File(Environment.getExternalStorageDirectory()
@@ -78,7 +91,7 @@ public class CameraManager {
         outputStream.close();
         scanFile(jpgFile.getPath());
         if (mTakePictureListener != null) {
-            mTakePictureListener.onPictureTake(jpgFile.getPath());
+            mTakePictureListener.onPictureTake(thumbnail, jpgFile.getPath());
         }
     }
 
@@ -115,7 +128,9 @@ public class CameraManager {
                 mCamera.startPreview();
                 mCamera.autoFocus(mAutoFocusCB);
             } catch (IOException e) {
-                e.printStackTrace();
+                if (mTakePictureListener != null) {
+                    mTakePictureListener.onError("open camera failed");
+                }
             }
         }
 
@@ -139,11 +154,12 @@ public class CameraManager {
     private void setCameraParameters() {
         Camera.Parameters parameters = mCamera.getParameters();
         List<Camera.Size> sizeList;
-        sizeList = parameters.getSupportedPictureSizes();
-        if (sizeList.size() > 0) {
-            Camera.Size cameraSize = sizeList.get(0);
-            parameters.setPictureSize(cameraSize.width, cameraSize.height);
-        }
+//        sizeList = parameters.getSupportedPictureSizes();
+//        if (sizeList.size() > 0) {
+//            Camera.Size cameraSize = sizeList.get(0);
+//            parameters.setPictureSize(cameraSize.width, cameraSize.height);
+//        }
+        parameters.setPictureSize(800, 480);
         parameters.setPictureFormat(ImageFormat.JPEG);
         parameters.setJpegQuality(100);
         parameters.setJpegThumbnailQuality(100);
@@ -170,7 +186,9 @@ public class CameraManager {
     }
 
     public interface TakePictureListener {
-        public void onPictureTake(String path);
+        void onPictureTake(Bitmap thumbnail, String path);
+
+        void onError(String error);
     }
 
     public boolean externalMemoryAvailable() {
