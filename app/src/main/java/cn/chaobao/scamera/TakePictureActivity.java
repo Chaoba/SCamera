@@ -1,9 +1,11 @@
 package cn.chaobao.scamera;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.animation.Animation;
@@ -36,18 +38,40 @@ public class TakePictureActivity extends AppCompatActivity {
 
         mSplash.setOnCheckedChangeListener(mSplashCheckListener);
         mTakePicture = (Button) findViewById(R.id.take_pieture);
-        mTakePicture.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mTakePicture.setEnabled(false);
-                mCameraManager.tackPicture();
-            }
-        });
+
+        mThubmnail.setOnClickListener(mOnClickLister);
+        mTakePicture.setOnClickListener(mOnClickLister);
+        findViewById(R.id.close).setOnClickListener(mOnClickLister);
 
         animation = AnimationUtils.loadAnimation(TakePictureActivity.this, R.anim.tempview_show);
         animation.setAnimationListener(mAnimLister);
-        mAnimView.setAnimation(animation);
     }
+
+    View.OnClickListener mOnClickLister = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            switch (v.getId()) {
+                case R.id.thumbnail:
+                    if (!TextUtils.isEmpty(mLastPicturePath)) {
+                        Intent intent = new Intent();
+                        intent.addCategory(Intent.CATEGORY_OPENABLE);
+                        intent.setType("image/*");
+                        intent.setAction(Intent.ACTION_OPEN_DOCUMENT);
+//                        Intent intent = new Intent(Intent.ACTION_VIEW,
+//                                android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                        startActivity(intent);
+                    }
+                    break;
+                case R.id.take_pieture:
+                    mTakePicture.setEnabled(false);
+                    mCameraManager.tackPicture();
+                    break;
+                case R.id.close:
+                    finish();
+                    break;
+            }
+        }
+    };
 
     Animation.AnimationListener mAnimLister = new Animation.AnimationListener() {
         @Override
@@ -61,6 +85,9 @@ public class TakePictureActivity extends AppCompatActivity {
             if (mThubmBitmap != null) {
                 mThubmnail.setImageBitmap(mThubmBitmap);
             }
+            Intent i = new Intent(TakePictureActivity.this, AlbumActivity.class);
+            i.putExtra(AlbumActivity.PICTURE_PATH, mLastPicturePath);
+            startActivity(i);
         }
 
         @Override
@@ -99,9 +126,7 @@ public class TakePictureActivity extends AppCompatActivity {
             mAnimView.startAnimation(animation);
             mLastPicturePath = path;
             mThubmBitmap = thumbnail;
-//            Intent i = new Intent(TakePictureActivity.this, AlbumActivity.class);
-//            i.putExtra(AlbumActivity.PICTURE_PATH, path);
-//            startActivity(i);
+
         }
 
         @Override

@@ -25,7 +25,7 @@ import java.util.List;
  * Created by Liyanshun on 2015/6/24.
  */
 public class CameraManager {
-    private static final String PIC_DIR = "PIC_DIR";
+    public static final String PIC_DIR = "PIC_DIR";
     private Camera mCamera;
     private SurfaceView mSurface;
     private SurfaceHolder mHolder;
@@ -154,12 +154,15 @@ public class CameraManager {
     private void setCameraParameters() {
         Camera.Parameters parameters = mCamera.getParameters();
         List<Camera.Size> sizeList;
-//        sizeList = parameters.getSupportedPictureSizes();
-//        if (sizeList.size() > 0) {
-//            Camera.Size cameraSize = sizeList.get(0);
+        sizeList = parameters.getSupportedPictureSizes();
+        if (sizeList.size() > 0) {
+            Camera.Size cameraSize =null;// sizeList.get(0);
+            for(Camera.Size size: sizeList ){
+                Log.i("test",size.width+" : "+size.height);
+            }
 //            parameters.setPictureSize(cameraSize.width, cameraSize.height);
-//        }
-        parameters.setPictureSize(800, 480);
+        }
+        parameters.setPictureSize(1280,720);
         parameters.setPictureFormat(ImageFormat.JPEG);
         parameters.setJpegQuality(100);
         parameters.setJpegThumbnailQuality(100);

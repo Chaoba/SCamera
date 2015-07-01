@@ -13,37 +13,51 @@
     <ImageView
         android:id="@+id/anim_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone"/>
+        android:layout_height="match_parent"/>
 
-    <RadioGroup
-        android:id="@+id/splash_group"
+    <RelativeLayout
+        android:id="@+id/top_bar"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:layout_alignParentTop="true"
-        android:orientation="horizontal"
-        android:padding="10dp">
+        android:layout_alignParentTop="true">
 
-        <RadioButton
-            android:id="@+id/splash_auto"
+        <Button
+            android:id="@+id/close"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:checked="true"
-            android:text="auto"/>
+            android:text="close"
+            android:layout_alignParentRight="true"/>
 
-        <RadioButton
-            android:id="@+id/splash_on"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="on"/>
+        <RadioGroup
+            android:id="@+id/splash_group"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_alignParentTop="true"
+            android:orientation="horizontal"
+            android:padding="10dp">
 
-        <RadioButton
-            android:id="@+id/splash_off"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="off"/>
+            <RadioButton
+                android:id="@+id/splash_auto"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="auto"/>
 
-    </RadioGroup>
+            <RadioButton
+                android:id="@+id/splash_on"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="on"/>
+
+            <RadioButton
+                android:id="@+id/splash_off"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="off"/>
+
+        </RadioGroup>
+
+    </RelativeLayout>
 
     <RelativeLayout
         android:id="@+id/bottom_bar"
@@ -54,8 +68,8 @@
 
         <ImageView
             android:id="@+id/thumbnail"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
             android:layout_alignParentLeft="true"
             android:src="@mipmap/ic_launcher"/>
 
