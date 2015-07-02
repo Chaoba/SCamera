@@ -19,6 +19,7 @@
         android:id="@+id/top_bar"
         android:layout_width="match_parent"
         android:layout_height="50dp"
+        android:background="@color/bar_background_color"
         android:layout_alignParentTop="true">
 
         <Button
@@ -63,6 +64,7 @@
         android:id="@+id/bottom_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/bar_background_color"
         android:layout_alignParentBottom="true"
         android:padding="10dp">
 

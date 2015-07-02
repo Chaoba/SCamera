@@ -1,13 +1,15 @@
 package cn.chaobao.scamera;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.hardware.Camera;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
@@ -15,7 +17,7 @@ import android.widget.ImageView;
 import android.widget.RadioGroup;
 import android.widget.Toast;
 
-public class TakePictureActivity extends AppCompatActivity {
+public class TakePictureActivity extends Activity {
     RadioGroup mSplash;
     Button mTakePicture;
     ImageView mAnimView, mThubmnail;
@@ -23,10 +25,13 @@ public class TakePictureActivity extends AppCompatActivity {
     private Animation animation;
     private String mLastPicturePath;
     private Bitmap mThubmBitmap;
+    public static  int width, height;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.take_picture);
         SurfaceView surfaceView = (SurfaceView) findViewById(R.id.surface);
 
@@ -45,6 +50,11 @@ public class TakePictureActivity extends AppCompatActivity {
 
         animation = AnimationUtils.loadAnimation(TakePictureActivity.this, R.anim.tempview_show);
         animation.setAnimationListener(mAnimLister);
+
+        WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
+        android.view.Display display = wm.getDefaultDisplay();
+        width = display.getWidth();
+        height = display.getHeight();
     }
 
     View.OnClickListener mOnClickLister = new View.OnClickListener() {

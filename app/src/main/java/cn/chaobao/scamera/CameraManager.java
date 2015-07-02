@@ -154,15 +154,20 @@ public class CameraManager {
     private void setCameraParameters() {
         Camera.Parameters parameters = mCamera.getParameters();
         List<Camera.Size> sizeList;
-        sizeList = parameters.getSupportedPictureSizes();
-        if (sizeList.size() > 0) {
-            Camera.Size cameraSize =null;// sizeList.get(0);
-            for(Camera.Size size: sizeList ){
-                Log.i("test",size.width+" : "+size.height);
-            }
-//            parameters.setPictureSize(cameraSize.width, cameraSize.height);
-        }
-        parameters.setPictureSize(1280,720);
+//        sizeList = parameters.getSupportedPictureSizes();
+//        if (sizeList.size() > 0) {
+//            Camera.Size cameraSize = null;// sizeList.get(0);
+//            for (Camera.Size size : sizeList) {
+//                if (size.width * size.height < 100000) {
+//                    cameraSize = size;
+//                    break;
+//                }
+//            }
+//            if (cameraSize != null)
+//                parameters.setPictureSize(cameraSize.width, cameraSize.height);
+//        }
+        parameters.setPictureSize(TakePictureActivity.width, TakePictureActivity.height);
+        parameters.setPictureSize(1280, 720);
         parameters.setPictureFormat(ImageFormat.JPEG);
         parameters.setJpegQuality(100);
         parameters.setJpegThumbnailQuality(100);
