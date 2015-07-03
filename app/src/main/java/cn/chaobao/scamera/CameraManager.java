@@ -1,16 +1,8 @@
 package cn.chaobao.scamera;
 
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
-import android.media.MediaScannerConnection;
-import android.media.ThumbnailUtils;
-import android.net.Uri;
 import android.os.Environment;
-import android.os.StatFs;
-import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -31,10 +23,8 @@ public class CameraManager {
     private SurfaceHolder mHolder;
     private TakePictureListener mTakePictureListener;
     private static final SimpleDateFormat format = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
-    Context mContext;
 
-    public void setSurface(Context c, SurfaceView surface, TakePictureListener listener) {
-        mContext = c;
+    public void setSurface( SurfaceView surface, TakePictureListener listener) {
         mSurface = surface;
         mHolder = mSurface.getHolder();
         mHolder.addCallback(mSurfaceHolderCallback);
@@ -56,28 +46,18 @@ public class CameraManager {
         }
     };
 
-    public void tackPicture() {
-        if (!externalMemoryAvailable()) {
-            if (mTakePictureListener != null) {
-                mTakePictureListener.onError("no sdcard!");
-            }
-            return;
-        }
-        if (mCamera != null) {
-            mCamera.takePicture(null, null, null, mPictureCallback);
-        }
-    }
+
 
     public void saveToSDCard(byte[] data) throws IOException {
-        if (data.length > getAvailableExternalMemorySize()) {
+        if (data.length > MainApplication.getAvailableExternalMemorySize()) {
             if (mTakePictureListener != null) {
                 mTakePictureListener.onError("no enough memory");
             }
             return;
         }
-        Bitmap bm = BitmapFactory.decodeByteArray(data, 0, data.length);
-        //生成缩略图
-        Bitmap thumbnail = ThumbnailUtils.extractThumbnail(bm, 213, 213);
+//        Bitmap bm = BitmapFactory.decodeByteArray(data, 0, data.length);
+//        //生成缩略图
+//        Bitmap thumbnail = ThumbnailUtils.extractThumbnail(bm, 213, 213);
         Date date = new Date();
         String filename = format.format(date) + ".jpg";
         File fileFolder = new File(Environment.getExternalStorageDirectory()
@@ -89,22 +69,13 @@ public class CameraManager {
         FileOutputStream outputStream = new FileOutputStream(jpgFile);
         outputStream.write(data);
         outputStream.close();
-        scanFile(jpgFile.getPath());
+//        MainApplication.scanFile(jpgFile.getPath());
         if (mTakePictureListener != null) {
-            mTakePictureListener.onPictureTake(thumbnail, jpgFile.getPath());
+            mTakePictureListener.onPictureTake(jpgFile.getPath());
         }
     }
 
-    private void scanFile(String path) {
-        MediaScannerConnection.scanFile(mContext,
-                new String[]{path}, null,
-                new MediaScannerConnection.OnScanCompletedListener() {
 
-                    public void onScanCompleted(String path, Uri uri) {
-                        Log.i("TAG", "Finished scanning " + path);
-                    }
-                });
-    }
 
     Camera.AutoFocusCallback mAutoFocusCB = new Camera.AutoFocusCallback() {
         public void onAutoFocus(boolean success, Camera camera) {
@@ -194,24 +165,21 @@ public class CameraManager {
     }
 
     public interface TakePictureListener {
-        void onPictureTake(Bitmap thumbnail, String path);
+        void onPictureTake(String path);
 
         void onError(String error);
     }
 
-    public boolean externalMemoryAvailable() {
-        return Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED);
-    }
-
-    public long getAvailableExternalMemorySize() {
-        if (externalMemoryAvailable()) {
-            File path = Environment.getExternalStorageDirectory();
-            StatFs stat = new StatFs(path.getPath());
-            long blockSize = stat.getBlockSize();
-            long availableBlocks = stat.getAvailableBlocks();
-            return availableBlocks * blockSize;
-        } else {
-            return -1;
+    public  void tackPicture() {
+        if (!MainApplication.externalMemoryAvailable()) {
+            if (mTakePictureListener != null) {
+                mTakePictureListener.onError("no sdcard!");
+            }
+            return;
+        }
+        if (mCamera != null) {
+            mCamera.takePicture(null, null, null, mPictureCallback);
         }
     }
+
 }

@@ -3,9 +3,12 @@ package cn.chaobao.scamera;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.hardware.Camera;
+import android.media.ThumbnailUtils;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.Window;
@@ -17,15 +20,18 @@ import android.widget.ImageView;
 import android.widget.RadioGroup;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+
 public class TakePictureActivity extends Activity {
     RadioGroup mSplash;
     Button mTakePicture;
-    ImageView mAnimView, mThubmnail;
+    ImageView mAnimView, mThubmnailView, mSplashImg;
     final CameraManager mCameraManager = new CameraManager();
     private Animation animation;
-    private String mLastPicturePath;
+    public static int width, height;
+    private final int REQUEST_CODE = 0;
+    private ArrayList<String> mPicturePaths = new ArrayList<>();
     private Bitmap mThubmBitmap;
-    public static  int width, height;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,16 +41,17 @@ public class TakePictureActivity extends Activity {
         setContentView(R.layout.take_picture);
         SurfaceView surfaceView = (SurfaceView) findViewById(R.id.surface);
 
-        mCameraManager.setSurface(this, surfaceView, mLister);
+        mCameraManager.setSurface(surfaceView, mLister);
         mCameraManager.setFlashMode(Camera.Parameters.FLASH_MODE_AUTO);
         mSplash = (RadioGroup) findViewById(R.id.splash_group);
         mAnimView = (ImageView) findViewById(R.id.anim_view);
-        mThubmnail = (ImageView) findViewById(R.id.thumbnail);
-
-        mSplash.setOnCheckedChangeListener(mSplashCheckListener);
+        mThubmnailView = (ImageView) findViewById(R.id.thumbnail);
+        mSplashImg = (ImageView) findViewById(R.id.splash_img);
+        mSplashImg.setSelected(true);
         mTakePicture = (Button) findViewById(R.id.take_pieture);
 
-        mThubmnail.setOnClickListener(mOnClickLister);
+        mSplash.setOnCheckedChangeListener(mSplashCheckListener);
+        mThubmnailView.setOnClickListener(mOnClickLister);
         mTakePicture.setOnClickListener(mOnClickLister);
         findViewById(R.id.close).setOnClickListener(mOnClickLister);
 
@@ -57,18 +64,24 @@ public class TakePictureActivity extends Activity {
         height = display.getHeight();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+    }
+
     View.OnClickListener mOnClickLister = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
             switch (v.getId()) {
                 case R.id.thumbnail:
-                    if (!TextUtils.isEmpty(mLastPicturePath)) {
-                        Intent intent = new Intent();
-                        intent.addCategory(Intent.CATEGORY_OPENABLE);
-                        intent.setType("image/*");
-                        intent.setAction(Intent.ACTION_OPEN_DOCUMENT);
-//                        Intent intent = new Intent(Intent.ACTION_VIEW,
-//                                android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                    if (mPicturePaths.size()> 0) {
+//                        Intent intent = new Intent();
+//                        intent.addCategory(Intent.CATEGORY_OPENABLE);
+//                        intent.setType("image/*");
+//                        intent.setAction(Intent.ACTION_OPEN_DOCUMENT);
+                        Intent intent = new Intent(Intent.ACTION_VIEW,
+                                android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                         startActivity(intent);
                     }
                     break;
@@ -83,6 +96,7 @@ public class TakePictureActivity extends Activity {
         }
     };
 
+
     Animation.AnimationListener mAnimLister = new Animation.AnimationListener() {
         @Override
         public void onAnimationStart(Animation animation) {
@@ -93,11 +107,11 @@ public class TakePictureActivity extends Activity {
         public void onAnimationEnd(Animation animation) {
             mAnimView.setVisibility(View.GONE);
             if (mThubmBitmap != null) {
-                mThubmnail.setImageBitmap(mThubmBitmap);
+                mThubmnailView.setImageBitmap(mThubmBitmap);
             }
             Intent i = new Intent(TakePictureActivity.this, AlbumActivity.class);
-            i.putExtra(AlbumActivity.PICTURE_PATH, mLastPicturePath);
-            startActivity(i);
+            i.putExtra(AlbumActivity.PICTURE_PATH, mPicturePaths.get(mPicturePaths.size() - 1));
+            startActivityForResult(i, REQUEST_CODE);
         }
 
         @Override
@@ -112,12 +126,15 @@ public class TakePictureActivity extends Activity {
             switch (checkedId) {
                 case R.id.splash_auto:
                     mCameraManager.setFlashMode(Camera.Parameters.FLASH_MODE_AUTO);
+                    mSplashImg.setSelected(true);
                     break;
                 case R.id.splash_on:
                     mCameraManager.setFlashMode(Camera.Parameters.FLASH_MODE_ON);
+                    mSplashImg.setSelected(true);
                     break;
                 case R.id.splash_off:
                     mCameraManager.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+                    mSplashImg.setSelected(false);
                     break;
             }
         }
@@ -126,17 +143,18 @@ public class TakePictureActivity extends Activity {
 
     CameraManager.TakePictureListener mLister = new CameraManager.TakePictureListener() {
         @Override
-        public void onPictureTake(Bitmap thumbnail, String path) {
+        public void onPictureTake(String path) {
             mTakePicture.setEnabled(true);
-            mAnimView.setImageBitmap(thumbnail);
+
             if (animation == null) {
                 animation = AnimationUtils.loadAnimation(TakePictureActivity.this, R.anim.tempview_show);
                 animation.setAnimationListener(mAnimLister);
             }
             mAnimView.startAnimation(animation);
-            mLastPicturePath = path;
-            mThubmBitmap = thumbnail;
-
+            mThubmBitmap = createImageThumbnail(path);
+            if (mThubmBitmap != null)
+                mAnimView.setImageBitmap(mThubmBitmap);
+            mPicturePaths.add(path);
         }
 
         @Override
@@ -146,5 +164,28 @@ public class TakePictureActivity extends Activity {
         }
     };
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_CODE) {
+            if (resultCode == RESULT_CANCELED) {
+                mPicturePaths.remove(mPicturePaths.size() - 1);
 
+                mThubmBitmap = createImageThumbnail(mPicturePaths.get(mPicturePaths.size() - 1));
+                Log.d("test","mThubmBitmap:"+(mThubmBitmap!=null));
+                if (mThubmBitmap != null)
+                    mThubmnailView.setImageBitmap(mThubmBitmap);
+            }
+        }
+    }
+
+    public static Bitmap createImageThumbnail(String filePath) {
+        Log.d("test","create thumbnail:"+filePath);
+        if (TextUtils.isEmpty(filePath)) {
+            return null;
+        }
+        int targetSize = 96;
+        Bitmap bitmap = BitmapFactory.decodeFile(filePath);
+        Bitmap thumbnail = ThumbnailUtils.extractThumbnail(bitmap, targetSize, targetSize);
+        return thumbnail;
+    }
 }

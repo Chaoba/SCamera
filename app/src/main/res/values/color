@@ -2,4 +2,7 @@
 <resources>
     <color name="transparent">#00000000</color>
     <color name="bar_background_color">#80000000</color>
+    <color name="splash_checked_color">#ffcc00</color>
+    <color name="album_button_pressed">#808c1428</color>
+    <color name="album_button_normal">#cc000000</color>
 </resources>

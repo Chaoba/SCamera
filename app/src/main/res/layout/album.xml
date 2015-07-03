@@ -28,7 +28,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:background="@color/bar_background_color"
+            android:background="@drawable/album_save_cancel_button"
             android:text="save"
             android:textColor="@android:color/white"/>
 
@@ -37,7 +37,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:background="@color/bar_background_color"
+            android:background="@drawable/album_save_cancel_button"
             android:text="cancel"
             android:textColor="@android:color/white"/>
     </LinearLayout>

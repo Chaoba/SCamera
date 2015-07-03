@@ -12,8 +12,8 @@ import java.io.File;
 
 public class AlbumActivity extends Activity {
     public static final String PICTURE_PATH ="PATH";
+    public static final String RESULT_SVAE="SAVE";
     private String path;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -27,11 +27,19 @@ public class AlbumActivity extends Activity {
         findViewById(R.id.album_save).setOnClickListener(mOnClickLister);
     }
 
+    @Override
+    protected void onDestroy() {
+
+        super.onDestroy();
+    }
+
     View.OnClickListener mOnClickLister =new View.OnClickListener(){
         @Override
         public void onClick(View v) {
             switch(v.getId()){
                 case R.id.album_save:
+                    setResult(RESULT_OK);
+                    MainApplication.scanFile(path);
                     finish();
                     break;
                 case R.id.album_cancel:
@@ -53,6 +61,7 @@ public class AlbumActivity extends Activity {
         if(f.exists()){
             f.delete();
         }
+        setResult(RESULT_CANCELED);
     }
 
 }
