@@ -20,12 +20,13 @@ import android.widget.TextView;
  * @author Liyanshun
  * 
  */
-public abstract class FatherActivity extends Activity {
+public abstract class NewFatherActivity extends Activity {
 	protected Context mContext;
 	protected ImageButton mBackButton;
 	protected TextView mTitleView, mRrightButton;
 	protected LoadingDialog mLoading;
 	protected LayoutInflater mLayoutInflater;
+    protected View mTitleBar;
 	private ViewGroup mBodyViewGroup;
 
 	@Override
@@ -37,6 +38,7 @@ public abstract class FatherActivity extends Activity {
 		mLoading = new LoadingDialog(mContext);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(com.chaoba.utils.R.layout.father_layout);
+        mTitleBar=findViewById(R.id.title_bar);
 		mBackButton = (ImageButton) findViewById(com.chaoba.utils.R.id.back_button);
 		mBackButton.setOnClickListener(new OnClickListener() {
 			@Override
@@ -100,10 +102,10 @@ public abstract class FatherActivity extends Activity {
 
 	/**
 	 * implement this method to do some init jobs,such as
-	 * {@link com.chaoba.utils.FatherActivity#setView}
-	 * {@link com.chaoba.utils.FatherActivity#setTitle}
-	 * {@link com.chaoba.utils.FatherActivity#setRightButton}
-	 * {@link com.chaoba.utils.FatherActivity#getExtra}
+	 * {@link NewFatherActivity#setView}
+	 * {@link NewFatherActivity#setTitle}
+	 * {@link NewFatherActivity#setRightButton}
+	 * {@link NewFatherActivity#getExtra}
 	 */
 	public abstract void init();
 

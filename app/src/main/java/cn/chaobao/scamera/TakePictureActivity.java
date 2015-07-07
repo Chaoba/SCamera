@@ -1,6 +1,5 @@
 package cn.chaobao.scamera;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -8,37 +7,48 @@ import android.hardware.Camera;
 import android.media.ThumbnailUtils;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
-import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RadioGroup;
-import android.widget.Toast;
+
+import com.chaoba.utils.NewFatherActivity;
+import com.chaoba.utils.ToastManager;
 
 import java.util.ArrayList;
 
-public class TakePictureActivity extends Activity {
-    RadioGroup mSplash;
-    Button mTakePicture;
-    ImageView mAnimView, mThubmnailView, mSplashImg;
+public class TakePictureActivity extends NewFatherActivity {
+    private RadioGroup mSplash;
+    private Button mTakePicture;
+    private ImageView mAnimView, mThubmnailView, mSplashImg;
     final CameraManager mCameraManager = new CameraManager();
     private Animation animation;
-    public static int width, height;
     private final int REQUEST_CODE = 0;
     private ArrayList<String> mPicturePaths = new ArrayList<>();
-    private Bitmap mThubmBitmap;
+    private Bitmap mThumbBitmap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        setContentView(R.layout.take_picture);
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    protected void onDestroy() {
+        if(mCameraManager!=null){
+            mCameraManager.destory();
+        }
+        super.onDestroy();
+    }
+
+    @Override
+    public void init() {
+        setView(R.layout.take_picture);
+        mTitleBar.setVisibility(View.GONE);
         SurfaceView surfaceView = (SurfaceView) findViewById(R.id.surface);
 
         mCameraManager.setSurface(surfaceView, mLister);
@@ -58,16 +68,6 @@ public class TakePictureActivity extends Activity {
         animation = AnimationUtils.loadAnimation(TakePictureActivity.this, R.anim.tempview_show);
         animation.setAnimationListener(mAnimLister);
 
-        WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
-        android.view.Display display = wm.getDefaultDisplay();
-        width = display.getWidth();
-        height = display.getHeight();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-
     }
 
     View.OnClickListener mOnClickLister = new View.OnClickListener() {
@@ -75,7 +75,7 @@ public class TakePictureActivity extends Activity {
         public void onClick(View v) {
             switch (v.getId()) {
                 case R.id.thumbnail:
-                    if (mPicturePaths.size()> 0) {
+                    if (mPicturePaths.size() > 0) {
 //                        Intent intent = new Intent();
 //                        intent.addCategory(Intent.CATEGORY_OPENABLE);
 //                        intent.setType("image/*");
@@ -106,8 +106,8 @@ public class TakePictureActivity extends Activity {
         @Override
         public void onAnimationEnd(Animation animation) {
             mAnimView.setVisibility(View.GONE);
-            if (mThubmBitmap != null) {
-                mThubmnailView.setImageBitmap(mThubmBitmap);
+            if (mThumbBitmap != null) {
+                mThubmnailView.setImageBitmap(mThumbBitmap);
             }
             Intent i = new Intent(TakePictureActivity.this, AlbumActivity.class);
             i.putExtra(AlbumActivity.PICTURE_PATH, mPicturePaths.get(mPicturePaths.size() - 1));
@@ -151,16 +151,16 @@ public class TakePictureActivity extends Activity {
                 animation.setAnimationListener(mAnimLister);
             }
             mAnimView.startAnimation(animation);
-            mThubmBitmap = createImageThumbnail(path);
-            if (mThubmBitmap != null)
-                mAnimView.setImageBitmap(mThubmBitmap);
+            mThumbBitmap = createImageThumbnail(path);
+            if (mThumbBitmap != null)
+                mAnimView.setImageBitmap(mThumbBitmap);
             mPicturePaths.add(path);
         }
 
         @Override
         public void onError(String error) {
             mTakePicture.setEnabled(true);
-            Toast.makeText(TakePictureActivity.this, error, Toast.LENGTH_LONG).show();
+            ToastManager.showShort(mContext, error);
         }
     };
 
@@ -169,22 +169,45 @@ public class TakePictureActivity extends Activity {
         if (requestCode == REQUEST_CODE) {
             if (resultCode == RESULT_CANCELED) {
                 mPicturePaths.remove(mPicturePaths.size() - 1);
-
-                mThubmBitmap = createImageThumbnail(mPicturePaths.get(mPicturePaths.size() - 1));
-                Log.d("test","mThubmBitmap:"+(mThubmBitmap!=null));
-                if (mThubmBitmap != null)
-                    mThubmnailView.setImageBitmap(mThubmBitmap);
+                setThumbnail();
             }
         }
     }
 
+    private void setThumbnail() {
+        if (mPicturePaths.size() > 0) {
+            mThumbBitmap = createImageThumbnail(mPicturePaths.get(mPicturePaths.size() - 1));
+            if (mThumbBitmap != null)
+                mThubmnailView.setImageBitmap(mThumbBitmap);
+        }
+    }
+
     public static Bitmap createImageThumbnail(String filePath) {
-        Log.d("test","create thumbnail:"+filePath);
         if (TextUtils.isEmpty(filePath)) {
             return null;
         }
         int targetSize = 96;
-        Bitmap bitmap = BitmapFactory.decodeFile(filePath);
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        Bitmap bitmap = BitmapFactory.decodeFile(filePath, options);
+        options.inJustDecodeBounds = false;
+        // 计算缩放比
+        int h = options.outHeight;
+        int w = options.outWidth;
+        int beWidth = w / targetSize;
+        int beHeight = h / targetSize;
+        int be = 1;
+        if (beWidth < beHeight) {
+            be = beWidth;
+        } else {
+            be = beHeight;
+        }
+        if (be <= 0) {
+            be = 1;
+        }
+        options.inSampleSize = be;
+        // 重新读入图片，读取缩放后的bitmap
+        bitmap = BitmapFactory.decodeFile(filePath, options);
         Bitmap thumbnail = ThumbnailUtils.extractThumbnail(bitmap, targetSize, targetSize);
         return thumbnail;
     }

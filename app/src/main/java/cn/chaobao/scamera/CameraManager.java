@@ -3,28 +3,35 @@ package cn.chaobao.scamera;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
 import android.os.Environment;
+import android.text.TextUtils;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
+import rx.Observable;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
+
 /**
  * Created by Liyanshun on 2015/6/24.
  */
 public class CameraManager {
-    public static final String PIC_DIR = "PIC_DIR";
+    public static final String PIC_DIR = MainApplication.mContext.getString(R.string.app_name);
     private Camera mCamera;
     private SurfaceView mSurface;
     private SurfaceHolder mHolder;
     private TakePictureListener mTakePictureListener;
     private static final SimpleDateFormat format = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
 
-    public void setSurface( SurfaceView surface, TakePictureListener listener) {
+    public void setSurface(SurfaceView surface, TakePictureListener listener) {
         mSurface = surface;
         mHolder = mSurface.getHolder();
         mHolder.addCallback(mSurfaceHolderCallback);
@@ -32,28 +39,64 @@ public class CameraManager {
         mTakePictureListener = listener;
     }
 
+    public void destory() {
+        if (mCamera != null) {
+            mCamera.release();
+            mCamera = null;
+        }
+        mHolder = null;
+        mSurface = null;
+        mTakePictureListener = null;
+    }
+
     Camera.PictureCallback mPictureCallback = new Camera.PictureCallback() {
         @Override
-        public void onPictureTaken(byte[] data, Camera camera) {
-            try {
-                saveToSDCard(data);
-
-            } catch (IOException e) {
-                if (mTakePictureListener != null) {
-                    mTakePictureListener.onError("save picture failed!");
+        public void onPictureTaken(final byte[] data, Camera camera) {
+            Observable observable = Observable.create(new Observable.OnSubscribe<String>() {
+                @Override
+                public void call(Subscriber<? super String> subscriber) {
+                    String result = saveToSDCard(data);
+                    if (TextUtils.isEmpty(result)) {
+                        subscriber.onError(new Exception("save picture failed!"));
+                    } else {
+                        subscriber.onNext(result);
+                        subscriber.onCompleted();
+                    }
                 }
-            }
+            });
+            observable
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribeOn(Schedulers.io())
+                    .subscribe(new Subscriber<String>() {
+                        @Override
+                        public void onCompleted() {
+
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+                            if (mTakePictureListener != null) {
+                                mTakePictureListener.onError(e.getMessage());
+                            }
+                        }
+
+                        @Override
+                        public void onNext(String s) {
+                            if (mTakePictureListener != null) {
+                                mTakePictureListener.onPictureTake(s);
+                            }
+                        }
+                    });
         }
     };
 
 
-
-    public void saveToSDCard(byte[] data) throws IOException {
-        if (data.length > MainApplication.getAvailableExternalMemorySize()) {
+    public String saveToSDCard(byte[] data) {
+        if (data.length > Util.getAvailableExternalMemorySize()) {
             if (mTakePictureListener != null) {
                 mTakePictureListener.onError("no enough memory");
             }
-            return;
+            return null;
         }
 //        Bitmap bm = BitmapFactory.decodeByteArray(data, 0, data.length);
 //        //生成缩略图
@@ -65,16 +108,22 @@ public class CameraManager {
         if (!fileFolder.exists()) {
             fileFolder.mkdir();
         }
-        File jpgFile = new File(fileFolder, filename);
-        FileOutputStream outputStream = new FileOutputStream(jpgFile);
-        outputStream.write(data);
-        outputStream.close();
-//        MainApplication.scanFile(jpgFile.getPath());
-        if (mTakePictureListener != null) {
-            mTakePictureListener.onPictureTake(jpgFile.getPath());
-        }
-    }
 
+        File jpgFile = new File(fileFolder, filename);
+        FileOutputStream outputStream = null;
+        try {
+            outputStream = new FileOutputStream(jpgFile);
+            outputStream.write(data);
+            outputStream.close();
+        } catch (FileNotFoundException e) {
+            return null;
+        } catch (IOException e) {
+            return null;
+
+        }
+        return jpgFile.getAbsolutePath();
+
+    }
 
 
     Camera.AutoFocusCallback mAutoFocusCB = new Camera.AutoFocusCallback() {
@@ -125,20 +174,19 @@ public class CameraManager {
     private void setCameraParameters() {
         Camera.Parameters parameters = mCamera.getParameters();
         List<Camera.Size> sizeList;
-//        sizeList = parameters.getSupportedPictureSizes();
-//        if (sizeList.size() > 0) {
-//            Camera.Size cameraSize = null;// sizeList.get(0);
-//            for (Camera.Size size : sizeList) {
-//                if (size.width * size.height < 100000) {
-//                    cameraSize = size;
-//                    break;
-//                }
-//            }
-//            if (cameraSize != null)
-//                parameters.setPictureSize(cameraSize.width, cameraSize.height);
-//        }
-        parameters.setPictureSize(TakePictureActivity.width, TakePictureActivity.height);
-        parameters.setPictureSize(1280, 720);
+        sizeList = parameters.getSupportedPictureSizes();
+        if (sizeList.size() > 0) {
+            Camera.Size cameraSize = null;// sizeList.get(0);
+            for (Camera.Size size : sizeList) {
+                if (size.width * size.height < 1000000) {
+                    cameraSize = size;
+                    break;
+                }
+            }
+            if (cameraSize != null)
+                parameters.setPictureSize(cameraSize.width, cameraSize.height);
+        }
+//        parameters.setPictureSize(1280, 720);
         parameters.setPictureFormat(ImageFormat.JPEG);
         parameters.setJpegQuality(100);
         parameters.setJpegThumbnailQuality(100);
@@ -170,8 +218,8 @@ public class CameraManager {
         void onError(String error);
     }
 
-    public  void tackPicture() {
-        if (!MainApplication.externalMemoryAvailable()) {
+    public void tackPicture() {
+        if (!Util.externalMemoryAvailable()) {
             if (mTakePictureListener != null) {
                 mTakePictureListener.onError("no sdcard!");
             }
