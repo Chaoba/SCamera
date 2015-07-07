@@ -1,5 +1,7 @@
 package cn.chaobao.scamera;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
 import android.os.Environment;
@@ -7,6 +9,7 @@ import android.text.TextUtils;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -98,9 +101,7 @@ public class CameraManager {
             }
             return null;
         }
-//        Bitmap bm = BitmapFactory.decodeByteArray(data, 0, data.length);
-//        //生成缩略图
-//        Bitmap thumbnail = ThumbnailUtils.extractThumbnail(bm, 213, 213);
+
         Date date = new Date();
         String filename = format.format(date) + ".jpg";
         File fileFolder = new File(Environment.getExternalStorageDirectory()
@@ -113,7 +114,10 @@ public class CameraManager {
         FileOutputStream outputStream = null;
         try {
             outputStream = new FileOutputStream(jpgFile);
-            outputStream.write(data);
+            Bitmap bm = BitmapFactory.decodeByteArray(data, 0, data.length);
+            ByteArrayOutputStream bos = compress(bm);
+            outputStream.write(bos.toByteArray());
+//            outputStream.write(data);
             outputStream.close();
         } catch (FileNotFoundException e) {
             return null;
@@ -125,6 +129,21 @@ public class CameraManager {
 
     }
 
+    private int maxSize = 100;
+
+    public ByteArrayOutputStream compress(Bitmap bitmap) {
+        ByteArrayOutputStream array = new ByteArrayOutputStream();
+        int options = 99;
+        do {
+            options -= 10;
+            if (options < 0) {
+                break;
+            }
+            array.reset();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, options, array);
+        } while (array.toByteArray().length / 1024 > maxSize);
+        return array;
+    }
 
     Camera.AutoFocusCallback mAutoFocusCB = new Camera.AutoFocusCallback() {
         public void onAutoFocus(boolean success, Camera camera) {
